@@ -9,6 +9,7 @@ from urllib.request import Request
 from PIL import Image
 from bs4 import BeautifulSoup
 
+urllink = "http://www.pondiuni.edu.in/"
 global imgext
 imgext = ('jpeg', 'JPEG', 'jpg', 'JPG', 'gif', 'GIF', 'tiff', 'png', 'PNG')
 
@@ -41,11 +42,11 @@ def images(urlk):
     # Reading URL and storing <img> tag
     r = get(urlk)
     statusCode = r.status_code
-    
     if statusCode == 503:
         print("Internal Server Error..! Error Code: %d!" % statusCode)
         return
 
+    print(statusCode)
     bsobj = BeautifulSoup(r.content)
     imgtag = bsobj.find_all('img')  # Finding all <img> tag
 
@@ -68,8 +69,8 @@ def images(urlk):
             srclink = link.get('src')
 
         if not(srclink.endswith(tuple(imgext))):
-           print("SRC tag doesn't end with image extention", srclink)
-           continue
+            print("SRC tag doesn't end with image extention", srclink)
+            continue
 
         # print(srclink)
         imgurl = urlparse.urljoin(urllink, srclink)
@@ -80,39 +81,24 @@ def images(urlk):
                 print("URL %s is an INVALID URL" % imgurl)
             elif get(imgurl).status_code == 500:
                 print("Internal Server Error with URL %s" % imgurl)
-
             print("Skiping to next link in <imgtag>")
             continue
         else:
             print("No Error Code for image url.. Proceeding to fetch image-size")
 
         print("Image URL", imgurl)
-        imgheight = link.get('height')
-        imgwidth = link.get('width')
-
-        if not (imgheight and imgwidth):
-            width, height = get_image_size(imgurl)
-            print(width, height)
-        else:
-            width, height = imgwidth, imgheight
-            
+        width, height = get_image_size(imgurl)
+        print(width, height)
         filewriter(link, link.get('src'), link.get('alt'), height, width)
 
 
 def urlFetch(url):
-    global urllink
-    urllink = url
-    thepage = get(url)
-    pageStatus=thepage.status_code
-
-    if ((pageStatus == 404) or (pageStatus == 500) or (pageStatus == 503)):
-            pass
-
-    soupdata = BeautifulSoup(thepage.content)
-    return subUrlFetch(soupdata)
+    thepage = urlopen(Request(url, data=None, headers=hdrs))
+    soupdata = BeautifulSoup(thepage, "lxml")
+    return soupdata
 
 
-# soup = urlFetch(urllink)
+soup = urlFetch(urllink)
 print("#" * 80)
 
 extension = ('.pdf', '.doc', '.docx', '.txt', 'xls', 'xlsx')
@@ -120,15 +106,17 @@ urldict = {}
 temp = []
 
 # Fetching all sub-url from root domain
-def subUrlFetch(soup):
-    for ur in soup.findAll('a'):
-        temp = ur.get('href')
-        if (str(temp).startswith('http') and (not(str(temp).endswith(tuple(
-           extension))))):
-            urldict[temp] = 0
-    print("Total", len(urldict), "link printed")
-    for key in (x for x in urldict):
-        images(key)
+for ur in soup.findAll('a'):
+    temp = ur.get('href')
+    if (str(temp).startswith('http') and (not(str(temp).endswith(tuple(
+       extension))))):
+        urldict[temp] = 0
+
+# print('Printing URL List.....................................')
+# for key in urldict:
+#    print(key, urldict[key])
+
+print("Total", len(urldict), "link printed")
 
 colHeader = ['url', 'src', 'alttext', 'imgheight', 'imgwidth']
 colField = {'url': 'URL', 'src': 'SRC',
@@ -151,6 +139,6 @@ def filewriter(ul, src, alt, ht, wd):
     # writing each row with data
     csvWriter.writerow({'url': ul, 'src': src, 'alttext': alt, 'imgheight': ht,
                         'imgwidth': wd})
-    return
 
-
+for key in (x for x in urldict):
+    images(key)
