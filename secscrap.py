@@ -56,7 +56,7 @@ def getimgSize(imgurl, responseObj, nextUrl):
         return(None, None)
 
 
-def images(urlk,):
+def images(urlk):
     print(urlk)
     # Reading URL and storing <img> tag
     try:
@@ -65,6 +65,10 @@ def images(urlk,):
     except requests.exceptions.SSLError as e:
         responseObj = requests.get(urlk, verify=True, headers=hdrs, timeout=30)
         statusCode = responseObj.status_code
+    except requests.exceptions.InvalidSchema:
+        print("Invalid URL Schema")
+        print("Skipping to next url")
+        return
     except socket.timeout as e:
         print("Socket Time out Error!", str(e))
         print("Skipping to next url")
@@ -122,6 +126,9 @@ def images(urlk,):
                 imgurl, verify=True, headers=hdrs, timeout=30, allow_redirects=True)
             statusCode = responseObject.status_code
             nextUrl = responseObject.url
+        except requests.exceptions.InvalidSchema:
+            print("Invalid URL Schema")
+            continue
         except socket.timeout as e:
             print("Socket Time out Error!", str(e))
             continue
@@ -189,6 +196,9 @@ def urlCrawler(url):
     except requests.exceptions.SSLError as e:
         responseObject = requests.get(url, verify=True, headers=hdrs, timeout=30)
         statusCode = responseObject.status_code
+    except requests.exceptions.InvalidSchema:
+        print("Invalid URL Schema")
+        return
     except socket.timeout as e:
         print("Socket Time out Error!", str(e))
         return
