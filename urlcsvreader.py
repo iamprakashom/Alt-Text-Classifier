@@ -20,11 +20,10 @@ i=0
 for url in columns['URL']:
     if not(url):
     	continue
-    
     i=i+1
     print("$" * 80)
     print("url {} fetching from csv file".format(i))
     print(url)
     #secscrap.urlFetch(urllist)
-    secscrap.url_fetch(url)
-    secscrap.url_list=[]
+    secscrap.urlFetch(url)
+    secscrap.urlList=[]
