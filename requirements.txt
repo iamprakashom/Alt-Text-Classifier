@@ -1,0 +1,8 @@
+# secscrap.py: 8
+Pillow == 3.3.1
+
+# secscrap.py: 9
+bs4 == 4.5.1
+
+# secscrap.py: 6
+requests == 2.11.1
