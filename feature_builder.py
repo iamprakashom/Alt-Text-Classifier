@@ -2,53 +2,48 @@ import os
 import csv
 from nltk.corpus import wordnet
 import re
-# import datatime
 colHeader = ['nullValue', 'stopWord', 'fileExt', 'fileExt_jpg',
-             'fileExt_gif', 'fileExt_png', 'fileExt_bmp',  # 'fileExt_pdf',
-             'fileNamepattern', 'Has_fnamepattern_by_cam', 'Has_image_num',
-             'Has_image_sym_num', 'Has_img_num', 'Has_img_sym_num',
-             # 'symbolOnly', 'symbolWord', 'dollarNumber', 'numOnly', 'words',
-             'symbolOnly', 'numOnly', 'words',
+             'fileExt_gif', 'fileExt_png',
+             'fileNamepattern', 'Has_image_num', 'Has_img_num',
+             'numOnly', 'symbolOnly', 'symbolWord', 'words',
              'imgResolution', 'wordNumPercentageWord', 'wordUnderscoreWord',
              'wordDashWord', 'wordandWord', 'wordSymbolword', 'alttextinDictionary']
 colField = {'nullValue': 'Null Value', 'stopWord': 'Stop Word',
-            'fileExt': 'ALT Text contain File Extension', 'fileExt_jpg': 'Has fileExt JPG', 'fileExt_gif': 'Has fileExt GIF',
-            'fileExt_png': 'Has fileExt PNG', 'fileExt_bmp': 'Has fileExt BMP',
-            # 'fileExt_pdf': 'Has fileExt PDF',
-            'fileNamepattern': 'File Name Pattern',
-            'Has_fnamepattern_by_cam': 'F_Name pattern by Camera', 'Has_image_num': 'Has <imageNum>',
-            'Has_image_sym_num': 'Has_image_sym_num', 'Has_img_num': 'Has_img_num',
-            # 'Has_img_sym_num': 'Has_img_sym_num', 'symbolOnly': 'Special Symbol Only', 'symbolWord': 'SymbolWord', 'dollarNumber': 'Currency',
-            'Has_img_sym_num': 'Has_img_sym_num', 'symbolOnly': 'Special Symbol Only',
-            'numOnly': 'Numeric Only', 'words': 'Alphabetic Words', 'imgResolution': 'Image Resolution',
+            'fileExt': 'ALT Text has File Extension', 'fileExt_jpg': 'Has fileExt JPG', 'fileExt_gif': 'Has fileExt GIF',
+            'fileExt_png': 'Has fileExt PNG', 'fileNamepattern': 'File Name Pattern',
+            'Has_image_num': 'Has_image_Num', 'Has_img_num': 'Has_img_num',
+            'numOnly': 'Numeric Only', 'symbolOnly': 'Special Symbol Only', 'symbolWord': 'SymbolWord',
+            'words': 'Alphabetic Words', 'imgResolution': 'Image Resolution',
             'wordNumPercentageWord': 'Word Number Percent Word',
             'wordUnderscoreWord': 'Word Underscore Word', 'wordDashWord': 'Word Dash Word',
             'wordandWord': 'Word & Word', 'wordSymbolword': 'Word Symbol(.({})) Word', 'alttextinDictionary': 'Alt Text in Dictionary'}
 
 imgExt = ['bmp', 'BMP', 'jpeg', 'JPEG', 'jpg', 'JPG', 'gif', 'GIF', 'png',
           'PNG', 'PDF', 'pdf']
-fnamePattern_list = ['dsc', 'DSC', 'img', 'IMG', 'Img', 'alt', 'Alt']
+fnamePattern_list = ['dsc', 'DSC', 'img', 'IMG', 'Img', 'image', 'Image', 'IMAGE',
+                     'alt', 'Alt']
+
+# img(\s|\(|\{|\_|\-|\/)?\d+|
+# image(\s)?(\s|\(|\{|\_|\-|\/)?\d+(\s|\}|\|\])?|
 
 
 def main():
     fnamePattern_expression = re.compile('''
-        image(\s|\(|\{|\_|\-|\/)?\d+(\s|\}|\))?|
-        img(\s|\(|\{|\_|\-|\/)?\d+|
+        (image|img)(\s)?(\#|\(|\{|\[|\_|\-|\/)?(\d+)?(\s)?(\}|\)|\])?|
         pic(\s|\(|\{|\_|\-|\/)?\d+|
-        banner(\s|\(|\{|\_|\-|\/\d*|
-        banner(-|_)\w+|
-        (slide|slider)(\s|\#|\$|\@|\%)?)
+        banner(\s)?(image)?(\#|\(|\{|\[|\_|\-|\/)?(\d+)?(\s)?(\}|\)|\])?|
+        (slider|slide)(\s)?(\#|\$|\@|\%)?(\d+)?
         ''', re.X | re.I)
 
-    has_image_num = re.compile('^image(\s)?\d+', re.I)
-    has_image_sym_num = re.compile('^image(\s)?(\(|\{|\_|\-)+\d+', re.I)
-    has_img_num = re.compile('^img(\s)?\d+', re.I)
-    has_img_sym_num = re.compile('^img(\s|\(|\{|\_|\-|\/)?\d+', re.I)
+    has_image_num = re.compile(
+        '^image(\s)?\d+|^image(\s)?(\(|\{|\_|\-)+\d+', re.I)
+    # has_image_sym_num = re.compile('^image(\s)?(\(|\{|\_|\-)+\d+', re.I)
+    has_img_num = re.compile('^img(\s)?\d+|^img(\s|\(|\{|\_|\-|\/)?\d+', re.I)
+    # has_img_sym_num = re.compile('^img(\s|\(|\{|\_|\-|\/)?\d+', re.I)
     symbolOnlypattern = re.compile('[#$%?@]+')
-    # dollarNumpattern = re.compile(
-    # '(\w*(\s))*?\$(\s)?\d+|\$(\s)?\d+\s(\w*(\s))*?')
     numOnlypattern = re.compile('^\d+(.)?\d+$')
-    # symbolWord = re.compile('(\/|\(|\{|\[|\,|\-|\:|\.|\#|\@)(\s)?[a-zA-Z]+')
+    symbolWord = re.compile('(\/|\(|\{|\[|\,|\-|\:|\.|\#|\@)(\s)?[a-zA-Z]+')
+    # symbolWord = re.compile('^(\[|\#|\$|\%|\?|\@|\])?(\s)?')
     wordpattern = re.compile('([a-zA-Z]+(\s)?[a-zA-Z]+)')
     wordNumPercentageWordpattern = re.compile(
         '[a-zA-Z]+(\s)?\d+\%(\s)?[a-zA-Z]+')
@@ -68,146 +63,97 @@ def main():
 
     def filepatternFinder(altText, imgReso_value, fileextension=None):
         if fileextension == 'JPG':
-            if has_image_num.match(altText):
+            if has_image_num.search(altText):
                 return csvfileWriter(fileExt=1,
-                                     fileExt_jpg=1, has_image_num=1, imgResolution=imgReso_value)
-            elif has_image_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_jpg=1,
-                                     has_image_sym_num=1, imgResolution=imgReso_value)
+                                     fileExt_jpg=1, fileNamepattern=1, has_image_num=1, imgResolution=imgReso_value)
             elif altText.lower().startswith('dsc'):
-                return csvfileWriter(fileExt=1, fileExt_jpg=1,
-                                     has_fnamepattern_by_camera=1, imgResolution=imgReso_value)
-            elif has_img_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_jpg=1,
+                return csvfileWriter(fileExt=1, fileExt_jpg=1, fileNamepattern=1,
+                                     imgResolution=imgReso_value)
+            elif has_img_num.search(altText):
+                return csvfileWriter(fileExt=1, fileExt_jpg=1, fileNamepattern=1,
                                      has_img_num=1, imgResolution=imgReso_value)
-            elif has_img_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_jpg=1,
-                                     has_img_sym_num=1, imgResolution=imgReso_value)
+            else:
+                return csvfileWriter(fileExt=1, fileExt_jpg=1, imgResolution=imgReso_value)
         elif fileextension == 'GIF':
-            if has_image_num.match(altText):
+            if has_image_num.search(altText):
                 return csvfileWriter(fileExt=1,
-                                     fileExt_gif=1, has_image_num=1, imgResolution=imgReso_value)
-            elif has_image_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_gif=1,
-                                     has_image_sym_num=1, imgResolution=imgReso_value)
+                                     fileExt_gif=1, fileNamepattern=1, has_image_num=1, imgResolution=imgReso_value)
             elif altText.lower().startswith('dsc'):
-                return csvfileWriter(fileExt=1, fileExt_gif=1,
-                                     has_fnamepattern_by_camera=1, imgResolution=imgReso_value)
-            elif has_img_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_gif=1,
+                return csvfileWriter(fileExt=1, fileExt_gif=1, fileNamepattern=1,
+                                     imgResolution=imgReso_value)
+            elif has_img_num.search(altText):
+                return csvfileWriter(fileExt=1, fileExt_gif=1, fileNamepattern=1,
                                      has_img_num=1, imgResolution=imgReso_value)
-            elif has_img_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_gif=1,
-                                     has_img_sym_num=1, imgResolution=imgReso_value)
+            else:
+                return csvfileWriter(fileExt=1, fileExt_gif=1, imgResolution=imgReso_value)
         elif fileextension == 'PNG':
-            if has_image_num.match(altText):
+            if has_image_num.search(altText):
                 return csvfileWriter(fileExt=1,
-                                     fileExt_png=1, has_image_num=1, imgResolution=imgReso_value)
-            elif has_image_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_png=1,
-                                     has_image_sym_num=1, imgResolution=imgReso_value)
+                                     fileExt_png=1, fileNamepattern=1, has_image_num=1, imgResolution=imgReso_value)
             elif altText.lower().startswith('dsc'):
-                return csvfileWriter(fileExt=1, fileExt_png=1,
-                                     has_fnamepattern_by_camera=1, imgResolution=imgReso_value)
-            elif has_img_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_png=1,
+                return csvfileWriter(fileExt=1, fileExt_png=1, fileNamepattern=1,
+                                     imgResolution=imgReso_value)
+            elif has_img_num.search(altText):
+                return csvfileWriter(fileExt=1, fileExt_png=1, fileNamepattern=1,
                                      has_img_num=1, imgResolution=imgReso_value)
-            elif has_img_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_png=1,
-                                     has_img_sym_num=1, imgResolution=imgReso_value)
-        elif fileextension == 'BMP':
-            if has_image_num.match(altText):
-                return csvfileWriter(fileExt=1,
-                                     fileExt_bmp=1, has_image_num=1, imgResolution=imgReso_value)
-            elif has_image_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_bmp=1,
-                                     has_image_sym_num=1, imgResolution=imgReso_value)
-            elif altText.lower().startswith('dsc'):
-                return csvfileWriter(fileExt=1, fileExt_bmp=1,
-                                     has_fnamepattern_by_camera=1, imgResolution=imgReso_value)
-            elif has_img_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_bmp=1,
-                                     has_img_num=1, imgResolution=imgReso_value)
-            elif has_img_sym_num.match(altText):
-                return csvfileWriter(fileExt=1, fileExt_bmp=1,
-                                     has_img_sym_num=1, imgResolution=imgReso_value)
+            else:
+                return csvfileWriter(fileExt=1, fileExt_png=1, imgResolution=imgReso_value)
         else:
-            return csvfileWriter(fileExt=1, imgResolution=imgReso_value)
+            return csvfileWriter(fileExt=1,
+                                 imgResolution=imgReso_value)
 
-    def imgExtension_finder(imgUrl):
-        if imgUrl.lower().endswith('jpg') or imgUrl.lower().endswith('jpeg'):
-            return ('JPG')
-        elif imgUrl.lower().endswith('png'):
-            return ('PNG')
-        elif imgUrl.lower().endswith('gif'):
-            return ('GIF')
-
-    def alttextChecker(altText, imgReso_value=0, img_url=None):
+    def alttextChecker(altText, imgReso_value=0):
         if (len(altText) == 0):
-            csvfileWriter(nullVal=1, imgResolution=imgReso_value, )
-        elif symbolOnlypattern.match(altText):
-            csvfileWriter(symbolOnly=1, imgResolution=imgReso_value)
-        elif numOnlypattern.match(altText):
-            csvfileWriter(numOnly=1, imgResolution=imgReso_value)
-        elif len(altText) <= 2:
+            csvfileWriter(nullVal=1, imgResolution=imgReso_value)
+        elif len(altText) <= 3:
             csvfileWriter(stopWord=1, imgResolution=imgReso_value)
         elif (len(altText.split()) == 1 and not(altText.endswith(tuple(imgExt)))and
-                not(fnamePattern_expression.match(altText)) and
-                not(wordDashWordpattern.match(altText))):
+                not(fnamePattern_expression.search(altText)) and
+                not(wordDashWordpattern.search(altText))):
             if wordnet.synsets(altText):
                 csvfileWriter(textinDictionary=1, imgResolution=imgReso_value)
             else:
-                csvfileWriter()
+                csvfileWriter(altText)
         elif altText.endswith(tuple(imgExt)):
-            # csvfileWriter(fielExt, )
-            # if altText.lower().endswith('jpg') or altText.lower().endswith('jpeg'):
-            #     filepatternFinder(altText, imgReso_value, fileextension='JPG')
-            # elif altText.lower().endswith('gif'):
-            #     filepatternFinder(altText, imgReso_value, fileextension='GIF')
-            # elif altText.lower().endswith('png'):
-            #     filepatternFinder(altText, imgReso_value, fileextension='PNG')
-            # elif altText.lower().endswith('bmp'):
-            #     filepatternFinder(altText, imgReso_value, fileextension='BMP')
-            # # elif altText.lower().endswith('pdf'):
-                # csvfileWriter(imgReso_value, fileExt=1, fileExt_pdf=1)
+            if altText.lower().endswith('jpg') or altText.lower().endswith('jpeg'):
+                filepatternFinder(altText, imgReso_value, fileextension='JPG')
+            elif altText.lower().endswith('gif'):
+                filepatternFinder(altText, imgReso_value, fileextension='GIF')
+            elif altText.lower().endswith('png'):
+                filepatternFinder(altText, imgReso_value, fileextension='PNG')
 
             '''
             Check for Image filename pattern image1, image2,picture1,
             picture2,pic1,pic2 etc
             '''
-        elif img_rul is not None:
-            if img_url.lower().endswith('jpg') or altText.lower().endswith('jpeg'):
-                filepatternFinder(altText, imgReso_value, fileextension='JPG')
-            elif img_url.lower().endswith('gif'):
-                filepatternFinder(altText, imgReso_value, fileextension='GIF')
-            elif img_url.lower().endswith('png'):
-                filepatternFinder(altText, imgReso_value, fileextension='PNG')
-            elif img_url.lower().endswith('bmp'):
-                filepatternFinder(altText, imgReso_value, fileextension='BMP')
-        elif altText.startswith(tuple(fnamePattern_list)) or fnamePattern_expression.match(altText):
+        elif altText.startswith(tuple(fnamePattern_list)) or fnamePattern_expression.search(altText):
             if altText.lower().startswith('dsc'):
                 csvfileWriter(fileNamepattern=1,
-                              has_fnamepattern_by_camera=1, imgResolution=imgReso_value)
-            elif has_image_num.match(altText):
+                              imgResolution=imgReso_value)
+            elif has_image_num.search(altText):
                 csvfileWriter(
+                    altText,
                     fileNamepattern=1,
                     has_image_num=1,
                     imgResolution=imgReso_value)
-            elif has_image_sym_num.match(altText):
+            elif has_img_num.search(altText):
                 csvfileWriter(
-                    fileNamepattern=1,
-                    has_image_sym_num=1,
-                    imgResolution=imgReso_value)
-            elif has_img_num.match(altText):
-                csvfileWriter(
+                    altText,
                     fileNamepattern=1,
                     has_img_num=1,
                     imgResolution=imgReso_value)
-            elif has_img_sym_num.match(altText):
+            else:
                 csvfileWriter(
+                    altText,
                     fileNamepattern=1,
-                    has_img_sym_num=1,
                     imgResolution=imgReso_value)
+
+        elif symbolOnlypattern.search(altText):
+            csvfileWriter(symbolOnly=1, imgResolution=imgReso_value)
+        elif symbolWord.match(altText):
+            csvfileWriter(symbolWord=1)
+        elif numOnlypattern.search(altText):
+            csvfileWriter(numOnly=1, imgResolution=imgReso_value)
         elif wordpattern.search(altText):
             if wordandWordpattern.search(altText):
                 if wordNumPercentageWordpattern.search(altText):
@@ -265,10 +211,7 @@ def main():
                     csvfileWriter(words=1, wordandWord=1,
                                   wordSymbolword=1, imgResolution=imgReso_value)
                 else:
-                    csvfileWriter(
-                        words=1,
-                        wordandWord=1,
-                        imgResolution=imgReso_value)
+                    csvfileWriter(words=1, wordandWord=1, imgResolution=imgReso_value)
             elif wordNumPercentageWordpattern.search(altText):
                 if wordDashWordpattern.search(altText):
                     if wordUnderscoreWordpattern.search(altText):
@@ -319,22 +262,21 @@ def main():
                 csvfileWriter(words=1, wordSymbolword=1)
             else:
                 csvfileWriter(words=1)
-        # elif dollarNumpattern.search(altText):
-        #     csvfileWriter(dollarNum=1)
+        elif symbolWord.search(altText):
+            csvfileWriter(symbolWord=1)
         else:
             csvfileWriter()
 
     def csvfileWriter(nullVal=0, stopWord=0, fileExt=0, fileExt_jpg=0,
-                      fileExt_gif=0, fileExt_png=0, fileExt_bmp=0,  # fileExt_pdf=0,
-                      fileNamepattern=0, has_fnamepattern_by_camera=0,
-                      has_image_num=0, has_image_sym_num=0, has_img_num=0,
-                      has_img_sym_num=0, symbolOnly=0,  # symbolWord=0,
-                      # dollarNum=0,
+                      fileExt_gif=0, fileExt_png=0,
+                      fileNamepattern=0,
+                      has_image_num=0, has_img_num=0,
+                      symbolOnly=0, symbolWord=0,
                       numOnly=0, words=0, imgResolution=0,
                       wordNumPercentageWord=0, wordUnderscoreWord=0,
                       wordDashWord=0, wordandWord=0, wordSymbolword=0,
                       textinDictionary=0):
-        fileName = "newfeaturevector" + ".csv"
+        fileName = "featurevector_demo" + ".csv"
         # check if file featurevector.csv already exist
         if os.access(fileName, os.F_OK):
             fileMode = 'a+'
@@ -349,15 +291,12 @@ def main():
             csvWriter.writerow({'nullValue': nullVal,
                                 'stopWord': stopWord, 'fileExt': fileExt,
                                 'fileExt_jpg': fileExt_jpg, 'fileExt_gif': fileExt_gif,
-                                'fileExt_png': fileExt_png, 'fileExt_bmp': fileExt_bmp,
-                                # 'fileExt_pdf': fileExt_pdf,
+                                'fileExt_png': fileExt_png,
                                 'fileNamepattern': fileNamepattern,
-                                'Has_fnamepattern_by_cam': has_fnamepattern_by_camera,
-                                'Has_image_num': has_image_num, 'Has_image_sym_num': has_image_sym_num,
-                                'Has_img_num': has_img_num, 'Has_img_sym_num': has_img_sym_num,
-                                'symbolOnly': symbolOnly,  # 'symbolWord': symbolWord,
-                                # 'dollarNumber': dollarNum, 'numOnly': numOnly,
-                                'numOnly': numOnly, 'words': words, 'imgResolution': imgResolution,
+                                'Has_image_num': has_image_num,
+                                'Has_img_num': has_img_num, 'numOnly': numOnly,
+                                'symbolOnly': symbolOnly, 'symbolWord': symbolWord,
+                                'words': words, 'imgResolution': imgResolution,
                                 'wordNumPercentageWord': wordNumPercentageWord,
                                 'wordUnderscoreWord': wordUnderscoreWord,
                                 'wordDashWord': wordDashWord, 'wordandWord': wordandWord,
@@ -368,6 +307,7 @@ def main():
     reader = csv.DictReader(fobj)
 
     def resolutionExtractor(IMG_height, IMG_width):
+        global i
         height = imgResolutionpattern.search(IMG_height)
         width = imgResolutionpattern.search(IMG_width)
         if (height is None or width is None):
@@ -379,9 +319,9 @@ def main():
         x, y = resolutionExtractor(row['IMG Height'], row['IMG Width'])
         if x and y:
             if imgResolutioncheck(x, y):
-                alttextChecker(row['ALT Text'], 1, row['IMAGE URL'])
+                alttextChecker(row['ALT Text'], 1)
             else:
-                alttextChecker(row['ALT Text'], 0, row['IMAGE URL'])
+                alttextChecker(row['ALT Text'], 0)
         else:
             continue
     fobj.close()
