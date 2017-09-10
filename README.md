@@ -4,7 +4,7 @@
  - beautifulsoup4>=4.4.0
  - Requests>=2.10.0
 
-Note: PIL-1.1.7 comes with Pillow-2.3.0, because PIL has been
+Note: PIL-1.1.7 comes with Pillow-2.3.0, as PIL has been
 	depreciated.
 
 
@@ -15,13 +15,15 @@ Note: PIL-1.1.7 comes with Pillow-2.3.0, because PIL has been
 
 If it is unsuccessfull, install all the required dependencies manually.
 
-	2.3 To Run:
+	2.3 Generate Data set of alternative text from 200+ Indian University website:
 
 `python3 urlcsvreader.py`
-		
-Note: These code can be run using spyder or other IDEs provided those IDEs fulfil requirements.
+It will generate a file 'dataset.csv' in current directory.
 
-### 3. Output:
-	3.1 It will generate a file 'dataset.csv' in the 'miniproject' directory where 
-	urlcsvreader.py and secscrap.py resides.
+	2.4 Build Feature Set from generated data set.
+	
+` python3 feature_builder.py`
+	
+	2.5 Train Model and visualize result.
+`python3 classifier_plot.py`
 
