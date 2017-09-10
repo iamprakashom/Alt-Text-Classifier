@@ -18,6 +18,7 @@ If it is unsuccessfull, install all the required dependencies manually.
 	2.3 Generate Data set of alternative text from 200+ Indian University website:
 
 `python3 urlcsvreader.py`
+
 It will generate a file 'dataset.csv' in current directory.
 
 	2.4 Build Feature Set from generated data set.
